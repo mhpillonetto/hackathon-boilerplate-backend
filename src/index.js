@@ -1,16 +1,19 @@
-import 'dotenv/config'
-import express from 'express';
+import 'dotenv/config';
 import cors from 'cors';
+import bodyParser from 'body-parser';
+import express from 'express';
 
-import routes from './routes';
 import models, { connectDb } from './models';
+import routes from './routes';
 
-//Cria a aplicacao e bota pra rodar
 const app = express();
+
+// Application-Level Middleware
+
 app.use(cors());
-app.listen(process.env.PORT, () =>
-    console.log(`Example app listening on port ${process.env.PORT}!`),
-);
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(async (req, res, next) => {
   req.context = {
@@ -20,54 +23,59 @@ app.use(async (req, res, next) => {
   next();
 });
 
-//configurcao de rotas, middlewares...
+// Routes
+
 app.use('/session', routes.session);
 app.use('/users', routes.user);
 app.use('/messages', routes.message);
 
-//conexao com o banco de dados
+// Start
 
-//deixar como true se quiser q limpe o banco antes de rodar:
 const eraseDatabaseOnSync = true;
 
 connectDb().then(async () => {
-    if (eraseDatabaseOnSync) {
-        await Promise.all([
-          models.User.deleteMany({}),
-          models.Message.deleteMany({}),
-        ]);
+  if (eraseDatabaseOnSync) {
+    await Promise.all([
+      models.User.deleteMany({}),
+      models.Message.deleteMany({}),
+    ]);
 
-        createUsersWithMessages();
-    }
+    createUsersWithMessages();
+  }
 
-    app.listen(process.env.PORT, () =>
-      console.log(`Example app listening on port ${process.env.PORT}!`),
-    );
+  app.listen(process.env.PORT, () =>
+    console.log(`Boilerlplate app listening on port ${process.env.PORT}!`),
+  );
+});
+
+const createUsersWithMessages = async () => {
+  const user1 = new models.User({
+    username: 'marcelo',
   });
 
-//faz o seed do banco
-const createUsersWithMessages = async () => {
-    const user1 = new models.User({
-      username: 'xisclayson',
-    });
-    const user2 = new models.User({
-      username: 'thundervrau',
-    });
-    const message1 = new models.Message({
-      text: 'bom dia',
-      user: user1.id,
-    });
-    const message2 = new models.Message({
-      text: 'esse é um template',
-      user: user2.id,
-    });
-    const message3 = new models.Message({
-      text: 'de express com mongo',
-      user: user2.id,
-    });
-    await message1.save();
-    await message2.save();
-    await message3.save();
-    await user1.save();
-    await user2.save();
-  };
+  const user2 = new models.User({
+    username: 'lorenzo',
+  });
+
+  const message1 = new models.Message({
+    text: 'servidor express + mongo ',
+    user: user1.id,
+  });
+
+  const message2 = new models.Message({
+    text: 'aaaaaaaaa',
+    user: user2.id,
+  });
+
+  const message3 = new models.Message({
+    text: 'asfdfasfdfa',
+    user: user2.id,
+  });
+
+  await message1.save();
+  await message2.save();
+  await message3.save();
+
+  await user1.save();
+  await user2.save();
+};
